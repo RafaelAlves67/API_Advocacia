@@ -99,6 +99,10 @@ export class UserController {
             return res.status(401).json({msg: "As senhas devem ser iguais para confirmação!"})
         }
 
+        if(!phone){
+            return res.status(401).json({msg: "Insira o número de celular"})
+        }
+
         if(phone.length !== 11){
             return res.status(401).json({msg: "Insira um número de telefone válido!"})
         }
@@ -149,7 +153,7 @@ export class UserController {
         const checkPassword = await bcrypt.compare(password, user.password)
 
         if(checkPassword){
-            const token = jwt.sign({id: user.id}, secret)
+            const token = jwt.sign({id: user.id, role: user.role}, secret)
 
             return res.status(200).json({msg: "Bem-vindo!", token, user})
         }else{
@@ -227,17 +231,20 @@ export class UserController {
         try{
             const id = req.params.id
 
-            const user = await User.findById(id)
-    
-            if(!user){
-                return res.status(404).json({msg: "Usuário não encontrado!"})
+            const userExist = await User.find({_id: id})
+
+            if(!userExist){
+                return res.status(404).json({msg: "Usuário não encontrado"})
             }
     
-            return res.status(200).json(user)
+            return res.status(200).json(userExist)
         }catch(error){
             console.log("Erro de servidor => " + error)
         }
     }
+
+   
+    
 
     // FUNÇÃO PARA FILTRAR USUÁRIO PELO NOME
     static async getUserByName(req,res){
