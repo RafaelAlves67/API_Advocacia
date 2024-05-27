@@ -7,7 +7,7 @@ const User = mongoose.model('User', new Schema({
         required: true
     },
 
-    email: {
+    cpf: {
         type: String,
         required: true
     },

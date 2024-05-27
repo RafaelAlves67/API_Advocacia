@@ -149,7 +149,6 @@ export class AgendaController {
             const status = req.params.status 
             
             const horarios = await Agenda.find({status: status})
-            console.log(horarios)
             if(horarios.length === 0){
                 return res.status(404).json({msg: `Nenhum horário marcado com status ${status}`})
             }

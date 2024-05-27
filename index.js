@@ -3,6 +3,7 @@ import cors from 'cors'
 import db from './data/db.js'
 import Routes from './routes/routes.js'
 
+
 // chamando express
 const app = express()
 

@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import { configDotenv } from 'dotenv'
 import User from '../models/User.js'
 import bcrypt from 'bcryptjs'
+import nodemailer from 'nodemailer'
 
 configDotenv()
 const secret = process.env.SECRET 
@@ -11,7 +12,7 @@ export class UserController {
 
     // FUNÇÃO PARA CRIAR USUÁRIO NORMAL
     static async registerUser(req,res){
-        const {name, email, password, confirmPassword, phone} = req.body 
+        const {name, cpf, password, confirmPassword, phone} = req.body 
 
         // validações
         if(!name){
@@ -19,8 +20,8 @@ export class UserController {
         }
 
         
-        if(!email){
-            return res.status(401).json({msg: "O campo de email é obrigatório!"})
+        if(!cpf){
+            return res.status(401).json({msg: "O campo de cpf é obrigatório!"})
         }
 
         
@@ -60,7 +61,7 @@ export class UserController {
         const hashPassword = await bcrypt.hash(password, salt)
 
         try{
-            const newUser = new User({name, email, password: hashPassword, phone})
+            const newUser = new User({name, cpf, password: hashPassword, phone})
             newUser.save()
             return res.status(200).json({msg: "Usuário criado! Você será redirecionado para página de Login"})
         }catch(error){
@@ -74,7 +75,7 @@ export class UserController {
     static async registerAdmin(req,res){
 
         try{
-            const {name, email, password, confirmPassword, phone} = req.body;
+            const {name, cpf, password, confirmPassword, phone} = req.body;
 
              // validações
         if(!name){
@@ -82,8 +83,8 @@ export class UserController {
         }
 
         
-        if(!email){
-            return res.status(401).json({msg: "O campo de email é obrigatório!"})
+        if(!cpf){
+            return res.status(401).json({msg: "O campo de cpf é obrigatório!"})
         }
 
         
@@ -108,10 +109,10 @@ export class UserController {
         }
 
         const phoneExist = await User.findOne({phone: phone})
-        const userExist = await User.findOne({email: email})
+        const userExist = await User.findOne({cpf: cpf})
         
         if(userExist){
-            return res.status(401).json({msg: "Email já existente!"})
+            return res.status(401).json({msg: "Cpf já está cadastrado!"})
         }
 
         if(phoneExist){
@@ -122,7 +123,7 @@ export class UserController {
         const salt = 12
         const hashPassword = await bcrypt.hash(password, salt)
 
-            const newAdmin = new User({name, email, password: hashPassword, phone, role: 'admin'})
+            const newAdmin = new User({name, cpf, password: hashPassword, phone, role: 'admin'})
             newAdmin.save()
             res.status(201).json({msg: "Admin registrado com sucesso!"})
         }catch(error){
@@ -132,11 +133,11 @@ export class UserController {
 
     // FUNÇÃO PARA LOGAR USUÁRIO
     static async loginUser(req,res){
-        const {email, password} = req.body
+        const {cpf, password} = req.body
 
         // validações
-        if(!email){
-            return res.status(401).json({msg: "Preencha o campo de email para fazer login!"})
+        if(!cpf){
+            return res.status(401).json({msg: "Preencha o campo de cpf para fazer login!"})
         }
 
                 
@@ -144,7 +145,7 @@ export class UserController {
             return res.status(401).json({msg: "Preencha o campo de senha para fazer login!"})
         }
 
-        const user = await User.findOne({email: email})
+        const user = await User.findOne({cpf: cpf})
 
         if(!user){
             return res.status(404).json({msg: "Usuário não encontrado!"})
@@ -174,16 +175,16 @@ export class UserController {
                 return res.status(404).json({ msg: "Usuário não encontrado!" });
             }
 
-            if(user.email === userEdited.email){
+            if(user.cpf === userEdited.cpf){
                 await User.updateOne({ _id: id }, userEdited);
                 const newUser = await User.findOne({ _id: id });
                 return res.status(200).json({ msg: "Usuário alterado", newUser });
             }
     
-            const emailExist = await User.findOne({ email: userEdited.email });
+            const cpfExist = await User.findOne({ email: userEdited.cpf });
     
-            if (emailExist) {
-                return res.status(403).json({ msg: "Email já existe! Tente outro email." });
+            if (cpfExist) {
+                return res.status(403).json({ msg: "CPF já está cadastrado! Tente outro." });
             }
         } catch (error) {
             console.log("Aconteceu o seguinte erro: ==> " + error);
@@ -265,5 +266,38 @@ export class UserController {
             console.log("Erro de servidor => " + error)
         }
     }
+
+    static async postEmail(req, res) {
+        const { email, message } = req.body;
+
+        // Configuração do Nodemailer
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: email,
+            to: process.env.EMAIL_USER,
+            subject: 'Mensagem do Formulário',
+            text: message
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log(error);
+                res.send('Erro ao enviar email');
+            } else {
+                console.log('Email enviado: ' + info.response);
+                res.send('Email enviado com sucesso');
+            }
+        });
+    }
+
 
 }

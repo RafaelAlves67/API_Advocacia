@@ -34,6 +34,7 @@ Routes.get('/searchDay/:day', authorizeRole('admin'), AgendaController.getHorari
 Routes.post('/agenda/add', AgendaController.addHorario)
 Routes.put('/agenda/add', AgendaController.editDay)
 Routes.delete('/agenda/add', AgendaController.cancelHorarios)
+Routes.post('/email', UserController.postEmail)
 
 
 export default Routes
